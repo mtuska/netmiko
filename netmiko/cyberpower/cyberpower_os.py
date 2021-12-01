@@ -87,21 +87,11 @@ class CyberPowerOSTelnet(CyberPowerOSBase):
             tsocket.sendall(IAC + DONT + option)
 
     def command_echo_read(self, cmd: str, read_timeout: float) -> str:
-
-        # Make sure you read until you detect the command echo (avoid getting out of sync)
-        new_data = self.read_channel()
-
-        # There can be echoed prompts that haven't been cleared before the cmd echo
-        # this can later mess up the trailing prompt pattern detection. Clear this out.
-        search_pattern = self._prompt_handler(True)
-        lines = new_data.split(search_pattern)
-        if len(lines) == 2:
-            # lines[-1] should realistically just be the null string
-            new_data = f"{cmd}{lines[-1]}"
-        else:
-            # cmd exists in the output multiple times? Just retain the original output
-            pass
-        return new_data
+        """
+        CyberPower OS on telnet does not echo commands back strangely, disable
+        the command verification as it consumes content
+        """
+        return ""
 
     def telnet_login(self, *args: Any, **kwargs: Any) -> str:
         # set callback function to handle telnet options.
