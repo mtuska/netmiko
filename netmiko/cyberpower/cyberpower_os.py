@@ -14,8 +14,7 @@ class CyberPowerOSBase(CiscoSSHConnection):
     """Common methods for CyberPower OS, both SSH and Telnet."""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        default_enter = kwargs.get("default_enter")
-        kwargs["default_enter"] = "\r" if default_enter is None else default_enter
+        kwargs["default_enter"] = kwargs.get("default_enter", "\r")
         super().__init__(*args, **kwargs)
 
     def session_preparation(self) -> Any:
@@ -69,9 +68,12 @@ class CyberPowerOSSSH(CyberPowerOSBase):
 
     pass
 
-
 class CyberPowerOSTelnet(CyberPowerOSBase):
     """CyberPower OS Telnet Driver."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["global_cmd_verify"] = kwargs.get("global_cmd_verify", False)
+        super().__init__(*args, **kwargs)
 
     def _process_option(self, tsocket: socket, command: bytes, option: bytes) -> None:
         """
@@ -85,13 +87,6 @@ class CyberPowerOSTelnet(CyberPowerOSBase):
             tsocket.sendall(IAC + WONT + option)
         elif command in (WILL, WONT):
             tsocket.sendall(IAC + DONT + option)
-
-    def command_echo_read(self, cmd: str, read_timeout: float) -> str:
-        """
-        CyberPower OS on telnet does not echo commands back strangely, disable
-        the command verification as it consumes content
-        """
-        return ""
 
     def telnet_login(self, *args: Any, **kwargs: Any) -> str:
         # set callback function to handle telnet options.
